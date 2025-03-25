@@ -20,11 +20,49 @@ class VoiceQA:
         pygame.mixer.init()
         # 是否使用本地TTS引擎
         self.use_local_tts = use_local_tts
+        
         # 初始化本地TTS引擎
         if self.use_local_tts:
-            self.tts_engine = pyttsx3.init()
-            # 設置語速 (默認值為200，值越大語速越快)
-            self.tts_engine.setProperty('rate', 220)
+            try:
+                self.tts_engine = pyttsx3.init()
+                
+                # 獲取可用的語音
+                voices = self.tts_engine.getProperty('voices')
+                
+                # 設置預設語音
+                default_voice = None
+                chinese_voice = None
+                
+                # 查找中文語音
+                for voice in voices:
+                    if "chinese" in voice.name.lower() or "mandarin" in voice.name.lower() or "zh" in voice.id.lower():
+                        chinese_voice = voice.id
+                    if "microsoft" in voice.name.lower() and ("chinese" in voice.name.lower() or "zh" in voice.id.lower()):
+                        default_voice = voice.id
+                        break
+                
+                # 如果找到了中文語音，設置它
+                if default_voice:
+                    self.tts_engine.setProperty('voice', default_voice)
+                    print(f"設置 TTS 語音為: {default_voice}")
+                elif chinese_voice:
+                    self.tts_engine.setProperty('voice', chinese_voice)
+                    print(f"設置 TTS 語音為: {chinese_voice}")
+                else:
+                    print(f"沒有找到中文語音，使用預設語音")
+                
+                # 設置語速 (默認值為200，值越大語速越快)
+                self.tts_engine.setProperty('rate', 180)
+                
+                # 設置音量 (0.0 到 1.0)
+                self.tts_engine.setProperty('volume', 0.9)
+                
+                print("本地 TTS 引擎初始化成功")
+                
+            except Exception as e:
+                print(f"本地 TTS 引擎初始化失敗: {str(e)}")
+                self.tts_engine = None
+                self.use_local_tts = False
         
     def record_question(self, duration: int = 5, sample_rate: int = 44100) -> str:
         """錄製語音問題"""
